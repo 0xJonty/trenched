@@ -18,7 +18,8 @@
     "zip": "npm run build && node scripts/zip.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "eslint . && tsc --noEmit"
+    "lint": "eslint . && tsc --noEmit",
+    "stage": "npm run build && node scripts/stage.mjs"
   },
   "dependencies": {
     "preact": "10.29.8"
