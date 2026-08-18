@@ -17,6 +17,7 @@ out/
 
 # Packaged extension
 *.zip
+trenched-*.zip
 *.crx
 *.pem
 
