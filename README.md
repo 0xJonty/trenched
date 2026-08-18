@@ -2,13 +2,28 @@
 
 A Google Chrome extension for [Axiom](https://axiom.trade), the memecoin trading terminal.
 
-> **Status:** early setup. Repository scaffolding only — no extension code yet.
+> **Status:** M1 — recon. The extension builds and loads, but does not alert yet. It
+> currently exists to capture Axiom's socket traffic so the feed schema can be written from
+> real data. See [docs/axiom-feed.md](docs/axiom-feed.md).
 
 ## What it is
 
 Trenched augments the Axiom trading terminal in the browser. Because it runs inside a
 fast-moving trading UI, the guiding constraint is latency: the extension must never be
 the reason a click, a chart update, or a fill feels slow.
+
+Planned for v1:
+
+- Notification and a distinct sound when a coin **bonds** and when it **migrates**.
+- **Dev wallet tracking** — a named wallet list, alerting the moment a tracked dev's new
+  token hits the new-pairs feed.
+- A **research button** on token pages that opens the X account, X community, website and an
+  X search for the contract address in one click.
+- Per-chain and per-event toggles across Solana, BNB, Robinhood Chain and Ethereum.
+
+It reads the WebSocket the Axiom page already opens, so it needs access to `axiom.trade` and
+nothing else: no API keys, no backend, no third-party data providers. Alerts fire while an
+Axiom tab is open.
 
 ## Stack
 
@@ -44,12 +59,22 @@ Load the unpacked extension:
 ```
 src/
   manifest.config.ts   # MV3 manifest, typed and generated at build time
-  content/             # injected into axiom.trade — keep this lean and hot-path-safe
-  background/          # MV3 service worker: alarms, messaging, network
-  popup/               # toolbar popup UI (Preact)
-  options/             # settings page (Preact)
+  inject/              # MAIN world: wraps window.WebSocket. Hot path.
+  content/             # ISOLATED world: bridge, audio, injected UI
+  background/          # MV3 service worker: classify, dedupe, notify
+  popup/ options/      # Preact UI, off the hot path
   lib/                 # shared, side-effect-free helpers
+docs/axiom-feed.md     # observed feed schema
 ```
+
+## Recon
+
+Axiom publishes no developer documentation, so the feed schema has to be observed. Build and
+load the extension, open the options page, press **Start recording**, then use Axiom normally.
+Frames are grouped by structure and counted, so a long session yields a bounded export rather
+than a firehose. Samples are credential-scrubbed and truncated before they are stored.
+
+Full procedure: [docs/axiom-feed.md](docs/axiom-feed.md).
 
 ## Contributing
 

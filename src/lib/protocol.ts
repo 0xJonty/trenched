@@ -7,11 +7,32 @@
  * exists to avoid confusing Axiom's own postMessage traffic with ours.
  */
 export const TAP_MARKER = '__trenched_tap__' as const
+export const CONTROL_MARKER = '__trenched_control__' as const
 
+/** Direction of a recorded frame, from the page's point of view. */
+export type FrameDirection = 'in' | 'out'
+
+/** Tap -> bridge. */
 export type TapMessage =
-  | { marker: typeof TAP_MARKER; type: 'socket-open'; url: string }
-  | { marker: typeof TAP_MARKER; type: 'socket-close'; url: string }
-  | { marker: typeof TAP_MARKER; type: 'frame'; payload: unknown }
+  | { marker: typeof TAP_MARKER; type: 'tap-ready' }
+  | { marker: typeof TAP_MARKER; type: 'socket-open'; url: string; socketId: number }
+  | { marker: typeof TAP_MARKER; type: 'socket-close'; url: string; socketId: number }
+  | {
+      marker: typeof TAP_MARKER
+      type: 'frame'
+      socketId: number
+      direction: FrameDirection
+      /** Raw frame text, truncated by the tap. Binary frames are described, not carried. */
+      data: string
+      truncated: boolean
+    }
+
+/** Bridge -> tap. The tap does no work at all unless recording is switched on. */
+export type ControlMessage = {
+  marker: typeof CONTROL_MARKER
+  type: 'set-recording'
+  recording: boolean
+}
 
 export function isTapMessage(value: unknown): value is TapMessage {
   return (
@@ -21,9 +42,24 @@ export function isTapMessage(value: unknown): value is TapMessage {
   )
 }
 
-/** Messages the content script and popup send to the service worker. */
+export function isControlMessage(value: unknown): value is ControlMessage {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    (value as { marker?: unknown }).marker === CONTROL_MARKER
+  )
+}
+
+/** Content script / UI -> service worker. */
 export type RuntimeMessage =
-  | { type: 'tap-status'; connected: boolean; url?: string }
-  | { type: 'feed-frame'; payload: unknown }
-  | { type: 'open-research'; urls: string[] }
-  | { type: 'get-status' }
+  | { type: 'socket-status'; connected: boolean; url: string }
+  | {
+      type: 'recon-frame'
+      direction: FrameDirection
+      data: string
+      truncated: boolean
+      url?: string
+    }
+  | { type: 'get-recon' }
+  | { type: 'set-recording'; recording: boolean }
+  | { type: 'clear-recon' }
